@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -27,7 +28,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
+import com.j256.ormlite.dao.Dao;
 import com.soldiersofmobile.atmlocator.R;
+import com.soldiersofmobile.atmlocator.db.Bank;
+import com.soldiersofmobile.atmlocator.db.DbHelper;
+
+import java.sql.SQLException;
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -58,6 +65,20 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
         ButterKnife.bind(this);
 
         initGoogleApi();
+
+        DbHelper dbHelper = new DbHelper(getApplicationContext());
+
+        try {
+            Dao<Bank, ?> dao = dbHelper.getDao(Bank.class);
+            List<Bank> banks = dao.queryForAll();
+            ArrayAdapter<Bank> bankArrayAdapter = new ArrayAdapter<Bank>(this, android.R.layout.simple_list_item_1,
+                    banks);
+
+            bankSpinner.setAdapter(bankArrayAdapter);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
 
     }
 
@@ -149,12 +170,15 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
                 and phone number. Extract the name, address, phone number, place ID and place types.
                  */
 
+                addressEditText.setText(place.getAddress());
+                latitudeTextView.setText(String.valueOf(place.getLatLng().latitude));
+                longitudeTextView.setText(String.valueOf(place.getLatLng().longitude));
 
-                final String placeId = place.getId();
-                String attribution = PlacePicker.getAttributions(data);
-                if (attribution == null) {
-                    attribution = "";
-                }
+
+                name = place.getName();
+                address = place.getAddress();
+                latLng = place.getLatLng();
+                phone = place.getPhoneNumber();
 
 
             } else {
