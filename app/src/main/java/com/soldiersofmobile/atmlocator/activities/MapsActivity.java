@@ -13,7 +13,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.j256.ormlite.dao.Dao;
 import com.soldiersofmobile.atmlocator.R;
+import com.soldiersofmobile.atmlocator.db.Atm;
+import com.soldiersofmobile.atmlocator.db.AtmDao;
+import com.soldiersofmobile.atmlocator.db.Bank;
+import com.soldiersofmobile.atmlocator.db.DbHelper;
+
+import java.sql.SQLException;
+import java.util.List;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -43,10 +51,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        DbHelper dbHelper = new DbHelper(getApplicationContext());
+
+        try {
+            AtmDao atmDao = dbHelper.getDao(Atm.class);
+            Dao<Bank, ?> bankDao = dbHelper.getDao(Bank.class);
+
+            List<Atm> atms = atmDao.queryForAll();
+
+            for (Atm atm : atms) {
+
+                bankDao.refresh(atm.getBank());
+                LatLng sydney = new LatLng(atm.getLatitude(), atm.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(sydney)
+                        .title(atm.getBank().getName()))
+                        .setSnippet(atm.getBank().getPhone());
+
+
+
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+                mMap.moveCamera(CameraUpdateFactory.zoomTo(5));
+
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     @Override
@@ -57,7 +90,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.action_add) {
+        if (item.getItemId() == R.id.action_add) {
             startActivity(new Intent(this, AddAtmActivity.class));
         }
         return super.onOptionsItemSelected(item);

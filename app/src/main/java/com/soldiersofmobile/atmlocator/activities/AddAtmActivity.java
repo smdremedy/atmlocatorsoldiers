@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ArrayAdapter;
@@ -30,6 +31,7 @@ import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 import com.j256.ormlite.dao.Dao;
 import com.soldiersofmobile.atmlocator.R;
+import com.soldiersofmobile.atmlocator.db.Atm;
 import com.soldiersofmobile.atmlocator.db.Bank;
 import com.soldiersofmobile.atmlocator.db.DbHelper;
 
@@ -44,6 +46,7 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
         GoogleApiClient.ConnectionCallbacks,
         LocationListener {
 
+    public static final String DATA_TAG = "data";
     @Bind(R.id.pickLocationButton)
     Button pickLocationButton;
     @Bind(R.id.addressEditText)
@@ -56,6 +59,8 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
     Spinner bankSpinner;
     @Bind(R.id.saveButton)
     Button saveButton;
+    private DbHelper dbHelper;
+    private AtmDataFragment fragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +71,7 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
 
         initGoogleApi();
 
-        DbHelper dbHelper = new DbHelper(getApplicationContext());
+        dbHelper = new DbHelper(getApplicationContext());
 
         try {
             Dao<Bank, ?> dao = dbHelper.getDao(Bank.class);
@@ -80,10 +85,38 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
         }
 
 
+        if(savedInstanceState == null) {
+            fragment = new AtmDataFragment();
+
+            getSupportFragmentManager().beginTransaction().add(fragment, DATA_TAG).commit();
+        } else {
+            fragment = (AtmDataFragment) getSupportFragmentManager().findFragmentByTag(DATA_TAG);
+        }
+
+
+
     }
 
     @OnClick(R.id.saveButton)
     public void saveAtm() {
+
+        Atm atm = new Atm();
+        atm.setAddress(fragment.address);
+        atm.setLatitude(fragment.latLng.latitude);
+        atm.setLongitude(fragment.latLng.longitude);
+
+        Bank bank = (Bank) bankSpinner.getSelectedItem();
+
+        atm.setBank(bank);
+
+        try {
+            Dao<Atm, ?> dao = dbHelper.getDao(Atm.class);
+
+            dao.create(atm);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        finish();
 
     }
 
@@ -100,10 +133,24 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
     private static final int REQUEST_PLACE_PICKER = 4321;
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
-    private CharSequence name;
-    private CharSequence address;
-    private CharSequence phone;
-    private LatLng latLng;
+
+
+
+    class AtmDataFragment extends Fragment {
+
+        private String name;
+        private String address;
+        private String phone;
+        private LatLng latLng;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setRetainInstance(true);
+        }
+    }
+
+
 
 
     private void initGoogleApi() {
@@ -175,10 +222,12 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
                 longitudeTextView.setText(String.valueOf(place.getLatLng().longitude));
 
 
-                name = place.getName();
-                address = place.getAddress();
-                latLng = place.getLatLng();
-                phone = place.getPhoneNumber();
+                fragment.name = place.getName().toString();
+                fragment.address = place.getAddress().toString();
+                fragment.latLng = place.getLatLng();
+                fragment.phone = place.getPhoneNumber().toString();
+
+
 
 
             } else {
