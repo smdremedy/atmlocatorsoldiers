@@ -9,9 +9,20 @@ import com.facebook.stetho.Stetho;
  */
 public class App extends Application {
 
+    private static AtmComponent atmComponent;
+
     @Override
     public void onCreate() {
         super.onCreate();
         Stetho.initializeWithDefaults(this);
+
+        AtmModule atmModule = new AtmModule(getApplicationContext());
+        atmComponent = DaggerAtmComponent.builder()
+                .atmModule(atmModule)
+                .build();
+    }
+
+    public static AtmComponent getAtmComponent() {
+        return atmComponent;
     }
 }

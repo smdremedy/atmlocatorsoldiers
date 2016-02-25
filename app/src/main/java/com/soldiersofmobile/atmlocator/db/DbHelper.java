@@ -10,6 +10,8 @@ import com.j256.ormlite.table.TableUtils;
 
 import java.sql.SQLException;
 
+import javax.inject.Inject;
+
 /**
  * Created by madejs on 25.02.16.
  */
@@ -18,6 +20,7 @@ public class DbHelper extends OrmLiteSqliteOpenHelper {
     public static final String ATMS_DB = "atms.db";
     public static final int DATABASE_VERSION = 1;
 
+    @Inject
     public DbHelper(Context context) {
         super(context, ATMS_DB, null, DATABASE_VERSION);
     }

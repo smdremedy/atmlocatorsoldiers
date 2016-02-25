@@ -30,6 +30,7 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.model.LatLng;
 import com.j256.ormlite.dao.Dao;
+import com.soldiersofmobile.atmlocator.App;
 import com.soldiersofmobile.atmlocator.R;
 import com.soldiersofmobile.atmlocator.db.Atm;
 import com.soldiersofmobile.atmlocator.db.Bank;
@@ -37,6 +38,8 @@ import com.soldiersofmobile.atmlocator.db.DbHelper;
 
 import java.sql.SQLException;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -59,7 +62,8 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
     Spinner bankSpinner;
     @Bind(R.id.saveButton)
     Button saveButton;
-    private DbHelper dbHelper;
+    @Inject
+    DbHelper dbHelper;
     private AtmDataFragment fragment;
 
     @Override
@@ -71,7 +75,8 @@ public class AddAtmActivity extends AppCompatActivity implements GoogleApiClient
 
         initGoogleApi();
 
-        dbHelper = new DbHelper(getApplicationContext());
+        App.getAtmComponent().inject(this);
+
 
         try {
             Dao<Bank, ?> dao = dbHelper.getDao(Bank.class);

@@ -23,6 +23,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.j256.ormlite.dao.Dao;
 import com.jakewharton.retrofit.Ok3Client;
+import com.soldiersofmobile.atmlocator.App;
+import com.soldiersofmobile.atmlocator.AtmComponent;
+import com.soldiersofmobile.atmlocator.AtmModule;
+import com.soldiersofmobile.atmlocator.DaggerAtmComponent;
 import com.soldiersofmobile.atmlocator.R;
 import com.soldiersofmobile.atmlocator.TumblrApi;
 import com.soldiersofmobile.atmlocator.TumblrResponse;
@@ -35,6 +39,8 @@ import java.security.cert.CertPathBuilder;
 import java.sql.SQLException;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import okhttp3.OkHttpClient;
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -45,6 +51,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
 
+    @Inject
+    DbHelper dbHelper;
+    @Inject
+    TumblrApi tumblrApi;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +64,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        App.getAtmComponent().inject(this);
+
     }
 
 
@@ -69,7 +83,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        DbHelper dbHelper = new DbHelper(getApplicationContext());
+
 
         try {
             AtmDao atmDao = dbHelper.getDao(Atm.class);
@@ -97,18 +111,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             e.printStackTrace();
         }
 
-        RestAdapter.Builder builder = new RestAdapter.Builder();
 
-        builder.setEndpoint("http://api.tumblr.com");
-
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .addNetworkInterceptor(new StethoInterceptor())
-                .build();
-
-        builder.setClient(new Ok3Client(okHttpClient));
-
-        RestAdapter restAdapter = builder.build();
-        TumblrApi tumblrApi = restAdapter.create(TumblrApi.class);
         tumblrApi.getTumblrPosts("wehavethemunchies",
                 "fD0HOvNDa2z10uyozPZNnjeb4fEFGVGm58zttH6cXSe4K0qC64", 10, 0, new Callback<TumblrResponse>() {
 
