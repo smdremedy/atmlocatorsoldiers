@@ -4,9 +4,17 @@ import android.content.Intent;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -14,14 +22,24 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.j256.ormlite.dao.Dao;
+import com.jakewharton.retrofit.Ok3Client;
 import com.soldiersofmobile.atmlocator.R;
+import com.soldiersofmobile.atmlocator.TumblrApi;
+import com.soldiersofmobile.atmlocator.TumblrResponse;
 import com.soldiersofmobile.atmlocator.db.Atm;
 import com.soldiersofmobile.atmlocator.db.AtmDao;
 import com.soldiersofmobile.atmlocator.db.Bank;
 import com.soldiersofmobile.atmlocator.db.DbHelper;
 
+import java.security.cert.CertPathBuilder;
 import java.sql.SQLException;
 import java.util.List;
+
+import okhttp3.OkHttpClient;
+import retrofit.Callback;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -78,6 +96,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        RestAdapter.Builder builder = new RestAdapter.Builder();
+
+        builder.setEndpoint("http://api.tumblr.com");
+
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addNetworkInterceptor(new StethoInterceptor())
+                .build();
+
+        builder.setClient(new Ok3Client(okHttpClient));
+
+        RestAdapter restAdapter = builder.build();
+        TumblrApi tumblrApi = restAdapter.create(TumblrApi.class);
+        tumblrApi.getTumblrPosts("wehavethemunchies",
+                "fD0HOvNDa2z10uyozPZNnjeb4fEFGVGm58zttH6cXSe4K0qC64", 10, 0, new Callback<TumblrResponse>() {
+
+                    @Override
+                    public void success(TumblrResponse tumblrResponse, Response response) {
+
+                        Log.d("TAG", tumblrResponse.toString());
+
+
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+
+                    }
+                });
 
 
     }
